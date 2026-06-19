@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import animation
 import random
 
 
@@ -16,12 +17,12 @@ lookup_table = {'111':7, # the keys are the neighborhoods patterns and the value
 
 class OneDCellularAutomata:
     def __init__(self, starting_state, rule):
-        self.starting_state = np.array(starting_state, dtype=int)
-        assert len(self.starting_state.shape) < 2, 'The starting state should be 1D!'
+        self.state = np.array(starting_state, dtype=int)
+        assert len(self.state.shape) < 2, 'The starting state should be 1D!'
         self.rule = format(rule, '08b')
 
     def update(self, n_steps):
-        last_state = self.starting_state
+        last_state = self.state.copy()
         all_states = []
         for i in range(n_steps):
             all_states.append(last_state.copy())
@@ -45,9 +46,47 @@ class OneDCellularAutomata:
         plt.colorbar()
         plt.show()
 
+    def update_single_step(self):
+        last_state = self.state.copy()
+        new_state = np.zeros(len(last_state), dtype=int)
+        for j,n in enumerate(last_state):
+            if j == 0:
+                neighborhood = f'{int(last_state[-1])}{int(last_state[0])}{int(last_state[1])}'
+            elif j == len(last_state) - 1:
+                neighborhood = f'{int(last_state[-2])}{int(last_state[-1])}{int(last_state[0])}'
+            else:
+                neighborhood = f'{int(last_state[j-1])}{int(last_state[j])}{int(last_state[j+1])}'
+            
+            cell_next_step_index = lookup_table[neighborhood]
+            cell_next_step = str(self.rule)[cell_next_step_index]
+            new_state[j] = int(cell_next_step)
+        self.state = new_state
+        return self.state
+
+    def animated_plot(self, height, interval=250, n_steps=500):
+        fig, ax = plt.subplots(figsize=(height, height))
+        matrix = np.zeros((len(self.state), len(self.state)), dtype=int)
+        img = ax.imshow(matrix, cmap='Greys')
+        def update(step):
+            if step < len(self.state):
+                real_step = step
+            else:
+                real_step = step % len(self.state)
+            
+            matrix[real_step] = self.state.copy()
+            self.update_single_step()
+            
+            img.set_data(matrix)
+            img.autoscale()
+            return [img]
+
+        self.ani = animation.FuncAnimation(fig=fig, func=update, frames=n_steps, interval = interval, blit=True) 
+        plt.show()
+
 
 
 if __name__ == '__main__':
-    starting_condition = [random.choice([0,1]) for i in range(600)]
+    starting_condition = [random.choice([0,1]) for i in range(50)]
     c = OneDCellularAutomata(starting_condition, rule=105)
-    c.update(n_steps=600)
+    #c.update(n_steps=600)
+    c.animated_plot(height=12, n_steps=12000, interval=500)
