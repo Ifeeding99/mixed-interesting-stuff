@@ -86,7 +86,7 @@ class OneDCellularAutomata:
 
 
 if __name__ == '__main__':
-    starting_condition = [random.choice([0,1]) for i in range(50)]
-    c = OneDCellularAutomata(starting_condition, rule=105)
+    starting_condition = [random.choice([0,1]) for i in range(500)]
+    c = OneDCellularAutomata(starting_condition, rule=150)
     #c.update(n_steps=600)
     c.animated_plot(height=12, n_steps=12000, interval=500)
